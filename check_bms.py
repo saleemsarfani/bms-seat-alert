@@ -1,69 +1,40 @@
-import os
-import json
 import requests
 
-SHOW_ID = os.getenv("SHOW_ID", "116360")
-VENUE = "AMBH"
-
-URL = (
-    "https://in.bookmyshow.com/serv/getData"
-    "?cmd=GETSHOWINFOJSON"
-    f"&vid={VENUE}"
-    f"&ssid={SHOW_ID}"
-    "&format=json"
-)
+url = "https://in.bookmyshow.com/api/movies-data/v4/showtimes-by-event/primary-dynamic"
 
 headers = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/138.0.0.0 Safari/537.36"
-    ),
-    "Accept": "application/json,text/plain,*/*",
-    "Referer": (
-        f"https://in.bookmyshow.com/movies/hyderabad/"
-        f"seat-layout/ET00439318/AMBH/{SHOW_ID}/20260814"
-    ),
-    "Origin": "https://in.bookmyshow.com",
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json, text/plain, */*",
+    "x-app-code": "WEB",
+    "x-region-code": "HYD",
+    "x-region-slug": "hyderabad",
+    "x-latitude": "17.385",
+    "x-longitude": "78.487",
+    "x-location-selection": "manual",
 }
 
-print("Testing BookMyShow API")
-print("Show ID:", SHOW_ID)
-print("URL:", URL)
+params = {
+    "eventCode": "ET00439318",
+    "dateCode": "20260814",
+    "isDesktop": "true",
+    "regionCode": "HYD",
+    "xLocationShared": "false",
+    "memberId": "",
+    "lsId": "",
+    "subCode": "",
+    "lat": "17.385",
+    "lon": "78.487",
+}
 
-session = requests.Session()
+print("Checking BookMyShow API...")
 
-try:
-    response = session.get(
-        URL,
-        headers=headers,
-        timeout=30
-    )
+r = requests.get(
+    url,
+    headers=headers,
+    params=params,
+    timeout=30
+)
 
-    print("HTTP status:", response.status_code)
-    print("Response size:", len(response.text))
-    print("Final URL:", response.url)
-
-    print("\n--- RESPONSE START ---")
-    print(response.text[:10000])
-    print("--- RESPONSE END ---")
-
-    if response.status_code != 200:
-        raise SystemExit(
-            f"BookMyShow API returned HTTP {response.status_code}"
-        )
-
-    try:
-        data = response.json()
-        print("\nJSON received successfully.")
-
-        # Save a readable copy in the Actions log
-        print(json.dumps(data, indent=2)[:10000])
-
-    except ValueError:
-        print("\nResponse was not JSON.")
-        raise SystemExit(1)
-
-except requests.RequestException as error:
-    print("REQUEST ERROR:", error)
-    raise SystemExit(1)
+print("HTTP:", r.status_code)
+print("Response length:", len(r.text))
+print(r.text[:5000])
