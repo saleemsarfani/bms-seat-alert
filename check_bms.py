@@ -1,62 +1,68 @@
 import os
-import re
+import json
 import requests
 
 SHOW_ID = os.getenv("SHOW_ID", "116360")
+VENUE = "AMBH"
 
 URL = (
-    "https://in.bookmyshow.com/movies/hyderabad/"
-    f"seat-layout/ET00439318/AMBH/{SHOW_ID}/20260814"
+    "https://in.bookmyshow.com/serv/getData"
+    "?cmd=GETSHOWINFOJSON"
+    f"&vid={VENUE}"
+    f"&ssid={SHOW_ID}"
+    "&format=json"
 )
 
-HEADERS = {
+headers = {
     "User-Agent": (
-        "Mozilla/5.0 (Linux; Android 10) "
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/138.0.0.0 Mobile Safari/537.36"
+        "Chrome/138.0.0.0 Safari/537.36"
     ),
-    "Accept-Language": "en-IN,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept": "application/json,text/plain,*/*",
+    "Referer": (
+        f"https://in.bookmyshow.com/movies/hyderabad/"
+        f"seat-layout/ET00439318/AMBH/{SHOW_ID}/20260814"
+    ),
+    "Origin": "https://in.bookmyshow.com",
 }
 
-print("Checking:", URL)
+print("Testing BookMyShow API")
+print("Show ID:", SHOW_ID)
+print("URL:", URL)
+
+session = requests.Session()
 
 try:
-    response = requests.get(
+    response = session.get(
         URL,
-        headers=HEADERS,
-        timeout=30,
-        allow_redirects=True,
+        headers=headers,
+        timeout=30
     )
 
     print("HTTP status:", response.status_code)
-    print("Final URL:", response.url)
     print("Response size:", len(response.text))
+    print("Final URL:", response.url)
 
-    text = re.sub(r"\s+", " ", response.text).lower()
-
-    keywords = [
-        "sold out",
-        "soldout",
-        "available",
-        "seat",
-        "blocked",
-        "booking",
-    ]
-
-    print("\nKeyword diagnostics:")
-
-    for keyword in keywords:
-        print(f"{keyword}: {text.count(keyword)}")
+    print("\n--- RESPONSE START ---")
+    print(response.text[:10000])
+    print("--- RESPONSE END ---")
 
     if response.status_code != 200:
         raise SystemExit(
-            f"BookMyShow returned HTTP {response.status_code}"
+            f"BookMyShow API returned HTTP {response.status_code}"
         )
 
-    print("\nTEST PASSED")
-    print("BookMyShow response was received.")
-    print("Next step: identify the actual seat-status data.")
+    try:
+        data = response.json()
+        print("\nJSON received successfully.")
+
+        # Save a readable copy in the Actions log
+        print(json.dumps(data, indent=2)[:10000])
+
+    except ValueError:
+        print("\nResponse was not JSON.")
+        raise SystemExit(1)
 
 except requests.RequestException as error:
     print("REQUEST ERROR:", error)
